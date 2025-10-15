@@ -4,7 +4,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using SchoolApp.Configuration;
 using SchoolApp.Data;
+using SchoolApp.Helpers;
 using SchoolApp.Repositories;
+using SchoolApp.Services;
 using Serilog;
 using System.Text;
 
@@ -21,6 +23,7 @@ namespace SchoolApp
 
             builder.Services.AddDbContext<SchoolAppDbContext>(options => options.UseSqlServer(connString));
             builder.Services.AddRepositories();
+            builder.Services.AddScoped<IApplicationService, ApplicationService>();
             builder.Services.AddAutoMapper(cfg => cfg.AddProfile<MapperConfig>());
             builder.Host.UseSerilog((ctx, lc) =>
                 lc.ReadFrom.Configuration(ctx.Configuration));
@@ -76,7 +79,14 @@ namespace SchoolApp
                 );
             });
 
-            // Add services to the container.
+            //builder.Services.AddControllers().AddJsonOptions(options =>
+            //{
+            //    options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+            //    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+
+            //});
+
+            
 
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -98,7 +108,7 @@ namespace SchoolApp
             app.UseAuthentication();
             app.UseAuthorization();
 
-
+            app.UseMiddleware<ErrorHandlerMiddleware>();
             app.MapControllers();
 
             app.Run();
