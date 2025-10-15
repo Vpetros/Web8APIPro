@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using SchoolApp.Data;
 
 namespace SchoolApp.Configuration
 {
@@ -6,7 +7,7 @@ namespace SchoolApp.Configuration
     {
         public MapperConfig()
         {
-
+            CreateMap<User, DTO.UserReadOnlyDTO>().ReverseMap();
 
         }
 
