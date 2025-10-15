@@ -1,4 +1,6 @@
-﻿namespace SchoolApp.Configuration
+﻿using AutoMapper;
+
+namespace SchoolApp.Configuration
 {
     public class MapperConfig : Profile
     {
