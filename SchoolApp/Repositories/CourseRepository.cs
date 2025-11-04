@@ -1,4 +1,5 @@
-﻿using SchoolApp.Data;
+﻿using Microsoft.EntityFrameworkCore;
+using SchoolApp.Data;
 
 namespace SchoolApp.Repositories
 {
@@ -7,15 +8,28 @@ namespace SchoolApp.Repositories
         public CourseRepository(SchoolAppDbContext context) : base(context)
         {
         }
-        public Task<List<Student>> GetCourseStudentsAsync(int courseId)
+
+        public async Task<List<Student>> GetCourseStudentsAsync(int courseId)
         {
-            throw new NotImplementedException();
+            return await context.Courses
+               .Where(c => c.Id == courseId)
+               .SelectMany(c => c.Students)
+               .ToListAsync();
         }
-        public Task<Teacher?> GetCourseTeacherAsync(int courseId)
+
+        public async Task<Teacher?> GetCourseTeacherAsync(int courseId)
         {
-            throw new NotImplementedException();
+            //var course = await context.Courses
+            //    .Where(c => c.Id == courseId)
+            //    .FirstOrDefaultAsync();
+
+            //return course?.Teacher;   // since lazy loaded in enabled, makes a second query
+
+            var course = await context.Courses
+                    .Include(c => c.Teacher) // agerly loads related entities in the same query
+                    .FirstOrDefaultAsync(c => c.Id == courseId);
+
+            return course?.Teacher; // not second query, since teacher has loaded
         }
     }
-
 }
-
