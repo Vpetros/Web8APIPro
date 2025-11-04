@@ -1,4 +1,5 @@
-﻿using SchoolApp.Exceptions;
+﻿using Microsoft.Extensions.Logging;
+using SchoolApp.Exceptions;
 using Serilog;
 using System.Net;
 
@@ -8,6 +9,7 @@ namespace SchoolApp.Helpers
     {
         private readonly ILogger<ErrorHandlerMiddleware> logger =
             new LoggerFactory().AddSerilog().CreateLogger<ErrorHandlerMiddleware>();
+
         private readonly RequestDelegate next;
 
         public ErrorHandlerMiddleware(RequestDelegate next)
