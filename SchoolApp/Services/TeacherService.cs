@@ -21,38 +21,23 @@ namespace SchoolApp.Services
             this.mapper = mapper;
         }
 
-        public async Task SignUpUserAsync(TeacherSignUpDTO request)
+        public async Task<UserReadOnlyDTO> SignUpUserAsync(TeacherSignUpDTO request)
         {
             Teacher teacher = ExtractTeacher(request);
-            User user = ExtractUser(request); ;
+            User user = ExtractUser(request);
 
             try
             {
-                //user = ExtractUser(request);
-                User? existingUser = await unitOfWork.UserRepository.GetUserByUsernameAsync(user.Username);
-
-                if (existingUser != null)
-                {
-                    throw new EntityAlreadyExistsException("User", "User with username " +
-                        existingUser.Username + " already exists");
-                }
-
                 user.Password = EncryptionUtil.Encrypt(user.Password);
                 await unitOfWork.UserRepository.AddAsync(user);
-
-
-                //if (await unitOfWork.TeacherRepository.GetByPhoneNumberAsync(teacher.PhoneNumber) is not null)
-                //{
-                //    throw new EntityAlreadyExistsException("Teacher", "Teacher with phone number " +
-                //        teacher.PhoneNumber + " already exists");
-                //}
-
                 await unitOfWork.TeacherRepository.AddAsync(teacher);
+
                 user.Teacher = teacher;
                 // teacher.User = user; EF manages the other-end of the relationship since both entities are attached
 
                 await unitOfWork.SaveAsync();
-                logger.LogInformation("Teacher {Teacher} signed up successfully.", teacher);        // ToDo toString in Teacher
+                logger.LogInformation("Teacher {Teacher} signed up successfully.", teacher);
+                return mapper.Map<UserReadOnlyDTO>(user);
             }
             catch (EntityAlreadyExistsException ex)
             {
@@ -75,17 +60,15 @@ namespace SchoolApp.Services
             };
         }
 
-        private Teacher ExtractTeacher(TeacherSignUpDTO signupDTO)
+        private Teacher ExtractTeacher(TeacherSignUpDTO? signupDTO)
         {
             return new Teacher()
             {
-                PhoneNumber = signupDTO.PhoneNumber,
+                PhoneNumber = signupDTO!.PhoneNumber!,
                 Institution = signupDTO.Institution!
             };
         }
-
-   
     }
-    }
+}
 
 

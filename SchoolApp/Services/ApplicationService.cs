@@ -17,5 +17,6 @@ namespace SchoolApp.Services
         public UserService UserService => new(unitOfWork, mapper);
 
         public TeacherService TeacherService => new(unitOfWork, mapper);
+        public StudentService StudentService => new(unitOfWork, mapper);
     }
 }
