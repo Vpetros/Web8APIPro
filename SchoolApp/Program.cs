@@ -2,6 +2,9 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using SchoolApp.Configuration;
 using SchoolApp.Data;
 using SchoolApp.Helpers;
@@ -9,6 +12,7 @@ using SchoolApp.Repositories;
 using SchoolApp.Services;
 using Serilog;
 using System.Text;
+using System.Text.Json.Serialization;
 
 namespace SchoolApp
 {
@@ -24,6 +28,9 @@ namespace SchoolApp
             builder.Services.AddDbContext<SchoolAppDbContext>(options => options.UseSqlServer(connString));
             builder.Services.AddRepositories();
             builder.Services.AddScoped<IApplicationService, ApplicationService>();
+
+            // ToDo Add Services
+
             builder.Services.AddAutoMapper(cfg => cfg.AddProfile<MapperConfig>());
             builder.Host.UseSerilog((ctx, lc) =>
                 lc.ReadFrom.Configuration(ctx.Configuration));
@@ -79,6 +86,8 @@ namespace SchoolApp
                 );
             });
 
+
+
             //builder.Services.AddControllers().AddJsonOptions(options =>
             //{
             //    options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
@@ -86,12 +95,31 @@ namespace SchoolApp
 
             //});
 
-            
+            builder.Services.AddControllers().AddNewtonsoftJson(options =>
+            {
+                options.SerializerSettings.NullValueHandling = NullValueHandling.Include;
+                options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Serialize;
+                options.SerializerSettings.Converters.Add(new StringEnumConverter());
+            });
 
-            builder.Services.AddControllers();
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
+
+            builder.Services.AddSwaggerGen(options =>
+            {
+                options.SwaggerDoc("v1", new OpenApiInfo { Title = "School App", Version = "v1" });
+                // options.SupportNonNullableReferenceTypes(); // default true > .NET 6
+                options.AddSecurityDefinition(JwtBearerDefaults.AuthenticationScheme,
+                    new OpenApiSecurityScheme
+                    {
+                        Description = "JWT Authorization header using the Bearer scheme.",
+                        Name = "Authorization",
+                        In = ParameterLocation.Header,
+                        Type = SecuritySchemeType.Http,
+                        Scheme = JwtBearerDefaults.AuthenticationScheme,
+                        BearerFormat = "JWT"
+                    });
+                options.OperationFilter<AuthorizeOperationFilter>();
+            });
 
             var app = builder.Build();
 
@@ -99,12 +127,13 @@ namespace SchoolApp
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
-                app.UseSwaggerUI();
+                app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "School App v1"));
             }
 
             app.UseHttpsRedirection();
 
-            app.UseCors("AllowAll");
+            app.UseCors("LocalClient");
+
             app.UseAuthentication();
             app.UseAuthorization();
 
